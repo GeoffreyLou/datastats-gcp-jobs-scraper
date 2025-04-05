@@ -1,0 +1,14 @@
+[project]
+name = "datastats-gcp-jobs-scraper"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "loguru",
+    "beautifulsoup4",
+    "python-dotenv",
+    "google-cloud-storage",
+    "pg8000",
+    "google-cloud-logging"
+]
