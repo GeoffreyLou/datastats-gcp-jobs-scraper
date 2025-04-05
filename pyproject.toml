@@ -5,10 +5,11 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "requests",
     "loguru",
     "beautifulsoup4",
     "python-dotenv",
-    "google-cloud-storage",
+    "google-cloud-storage>=1.17.0",
     "pg8000",
     "google-cloud-logging"
 ]

@@ -113,16 +113,18 @@ dependencies = [
     { name = "loguru" },
     { name = "pg8000" },
     { name = "python-dotenv" },
+    { name = "requests" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "beautifulsoup4" },
     { name = "google-cloud-logging" },
-    { name = "google-cloud-storage" },
+    { name = "google-cloud-storage", specifier = ">=1.17.0" },
     { name = "loguru" },
     { name = "pg8000" },
     { name = "python-dotenv" },
+    { name = "requests" },
 ]
 
 [[package]]
