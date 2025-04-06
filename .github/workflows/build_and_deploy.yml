@@ -1,0 +1,72 @@
+name: Build and deploy urls scraper Cloud Run 
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed 
+
+jobs:
+  deploy_cloud_run:
+    if: github.event.pull_request.merged == true
+
+    runs-on: ubuntu-latest
+
+    env:
+      GCP_REGION: europe-west9
+      GCP_JOB_NAME: ${{ secrets.GCP_JOB_NAME }} 
+      GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      GCP_ARTIFACT_REGISTRY_NAME: ${{ secrets.GCP_ARTIFACT_REGISTRY_NAME }}
+      GCP_CI_CD_SERVICE_ACCOUNT: ${{ secrets.GCP_CI_CD_SERVICE_ACCOUNT }}
+      GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Auth to GCP
+        id: get_gcp_access_token
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ env.GCP_CI_CD_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        id: setup_gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Set up Docker Buildx
+        id: setup_buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Auth
+        id: docker_auth
+        uses: docker/login-action@v3
+        with:
+          username: oauth2accesstoken
+          registry: ${{ env.GCP_REGION}}-docker.pkg.dev
+          password: ${{ steps.get_gcp_access_token.outputs.access_token }}
+
+      - name: Build and push Docker image
+        id: build_and_push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./
+          push: true
+          tags: ${{ env.GCP_REGION}}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REGISTRY_NAME }}/${{ env.GCP_JOB_NAME }}:latest
+
+      - name: Deploy to Cloud Run
+        id: deploy_cloud_run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          job: ${{ env.GCP_JOB_NAME }}
+          region: ${{ env.GCP_REGION }}
+          image: ${{ env.GCP_REGION}}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REGISTRY_NAME }}/${{ env.GCP_JOB_NAME }}:latest
+          skip_default_labels: true

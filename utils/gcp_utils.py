@@ -148,6 +148,49 @@ class GoogleUtils:
             logger.success(f"Downloaded storage object {source_blob_name} from bucket {bucket_name} to local file {destination_file_name}.")
         except Exception as e:
             logger.error(f"Error when downloading file: {e}")
+       
+    @staticmethod
+    def move_blob(
+        source_bucket_name: str,
+        source_blob_name: str,
+        destination_bucket_name: str,
+        destination_blob_name: str = None
+    ) -> None:
+        """
+        Move a blob from one bucket to another.
+
+        Parameters
+        ----------
+        source_bucket_name: str
+            Name of the source bucket
+        source_blob_name: str
+            Name of the blob to move
+        destination_bucket_name: str
+            Name of the destination bucket
+        destination_blob_name: str
+            Optional, new name for the blob in the destination bucket. If not provided, the same name will be used.
+
+        Returns
+        -------
+        None
+        """
+        try:
+            client = storage.Client()
+            source_bucket = client.bucket(source_bucket_name)
+            source_blob = source_bucket.blob(source_blob_name)
+
+            destination_bucket = client.bucket(destination_bucket_name)
+            destination_blob_name = destination_blob_name or source_blob_name
+
+            # Copy the blob to the destination bucket
+            source_bucket.copy_blob(source_blob, destination_bucket, destination_blob_name)
+
+            # Delete the blob from the source bucket
+            source_blob.delete()
+
+            logger.success(f"Blob {source_blob_name} moved from {source_bucket_name} to {destination_bucket_name} as {destination_blob_name}.")
+        except Exception as e:
+            logger.error(f"Error when moving blob: {e}")
             
     @staticmethod
     def download_blob_as_string(

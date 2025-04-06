@@ -14,6 +14,7 @@ class Config:
     Do not forget to specify the type. 
     """
     DATASTATS_BUCKET_URLS: str
+    DATASTATS_BUCKET_ARCHIVE: str
     DB_NAME: str
     DB_USER: str
     DB_PORT: str

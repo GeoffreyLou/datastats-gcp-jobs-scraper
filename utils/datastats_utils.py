@@ -11,6 +11,7 @@ class DataStats:
         config: Config
     ):
         self.urls_bucket_name=config.DATASTATS_BUCKET_URLS
+        self.archive_bucket_name=config.DATASTATS_BUCKET_ARCHIVE
         self.db_host=config.DB_HOST
         self.db_user=config.DB_USER
         self.db_password=config.DB_USER_PASSWORD
@@ -263,6 +264,13 @@ class DataStats:
             # For each job , scrap job informations and add it to the list of jobs to insert
             jobs_to_insert = jobs_scraper.scrape_jobs()
             data_to_insert.extend(jobs_to_insert)
+            
+            # Move the processed blob to another bucket
+            GoogleUtils.move_blob(
+                source_bucket_name=self.urls_bucket_name,
+                source_blob_name=blob,
+                destination_bucket_name=self.archive_bucket_name
+            )
 
         return data_to_insert
     
