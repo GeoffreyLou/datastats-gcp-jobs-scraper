@@ -208,14 +208,14 @@ class JobsScraper:
         """
         try:
             # Parse the date to extract month and year
-            date_obj = datetime.strptime(job_details['date'], '%Y-%m-%d')
+            date_obj = datetime.strptime(job_details['scrap_date'], '%Y-%m-%d')
             month_year = f"{date_obj.month:02d}{date_obj.year}"
             job_name = job_details['job_name']
             company_name = job_details['company_name']
-            job_location = job_details['job_location']
+            location = job_details['location']
             
             # Concatenate the fields
-            concat_string = f"{month_year}_{job_name}_{company_name}_{job_location}"
+            concat_string = f"{month_year}_{job_name}_{company_name}_{location}"
             
             # Normalize the string (lowercase, remove extra spaces)
             normalized = ' '.join(concat_string.lower().split())
@@ -247,20 +247,20 @@ class JobsScraper:
                 continue
             
             job_details = {
-                'date': job['date'],
+                'scrap_date': job['date'],
                 'job_scraped': job['job'],
                 'job_name': self.__get_job_name(soup=soup),
                 'company_name': self.__get_company_name(soup=soup),
-                'job_location': self.__get_job_location(soup=soup),
-                'job_level': self.__get_information(soup=soup, value_to_retreive='Niveau hiérarchique'),
-                'job_type': self.__get_information(soup=soup, value_to_retreive='Type d’emploi'),
-                'job_category': self.__get_information(soup=soup, value_to_retreive='Fonction'),
-                'job_sector': self.__get_information(soup=soup, value_to_retreive='Secteurs'),
-                'job_description' : self.__get_job_description(soup=soup),
+                'location': self.__get_job_location(soup=soup),
+                'level': self.__get_information(soup=soup, value_to_retreive='Niveau hiérarchique'),
+                'type': self.__get_information(soup=soup, value_to_retreive='Type d’emploi'),
+                'category': self.__get_information(soup=soup, value_to_retreive='Fonction'),
+                'sector': self.__get_information(soup=soup, value_to_retreive='Secteurs'),
+                'description' : self.__get_job_description(soup=soup),
                 'url': url,
             }
             
-            job_details['job_id'] = self.__generate_job_id(job_details)
+            job_details['id_deduplication'] = self.__generate_job_id(job_details)
             
             job_details_list.append(job_details)
             
