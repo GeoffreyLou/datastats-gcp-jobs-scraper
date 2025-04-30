@@ -1,4 +1,3 @@
-import io
 from loguru import logger
 from google.cloud import storage
 
