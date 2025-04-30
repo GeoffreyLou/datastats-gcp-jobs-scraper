@@ -47,7 +47,7 @@ class DataStats:
             'url': 'TEXT',
         }
 
-    def __generate_jobs_to_scrap(self, file: str) -> list(dict[str, str, str]):
+    def __generate_jobs_to_scrap(self, file: str) -> list[dict[str, str, str]]:
         """
         Generate a list of jobs to scrap from a file.
         The file param is a JSON string that contains the following structure:
