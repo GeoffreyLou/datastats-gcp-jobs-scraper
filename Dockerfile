@@ -9,4 +9,4 @@ RUN uv venv && uv sync
 ENV PATH="app/.venv/bin:$PATH"
 
 # Run Python with uv
-ENTRYPOINT ["uv", "run", "main.py"]
+ENTRYPOINT ["uv", "run", "src/main.py"]

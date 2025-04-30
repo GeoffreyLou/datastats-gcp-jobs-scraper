@@ -1,9 +1,9 @@
 import json
 from loguru import logger
-from utils.config_loader import Config
-from utils.gcp_utils import GoogleUtils
-from utils.pg_utils import PostgresUtils
-from utils.jobs_scraper import JobsScraper
+from src.utils.config_loader import Config
+from src.utils.gcp_utils import GoogleUtils
+from src.utils.pg_utils import PostgresUtils
+from src.utils.jobs_scraper import JobsScraper
 
 class DataStats:
     def __init__(
@@ -47,7 +47,7 @@ class DataStats:
             'url': 'TEXT',
         }
 
-    def __generate_jobs_to_scrap(self, file: str) -> list(dict[str, str, str]):
+    def __generate_jobs_to_scrap(self, file: str) -> list[dict[str, str, str]]:
         """
         Generate a list of jobs to scrap from a file.
         The file param is a JSON string that contains the following structure:
@@ -81,7 +81,7 @@ class DataStats:
             A JSON string containing the job data.
         
         Returns
-        -------
+        ------- 
         list(dict[str, str, str])
             A list of dictionaries containing the date, job title, and URL for each job.
         """
@@ -97,17 +97,17 @@ class DataStats:
                 jobs_to_scrap.append(
                     {
                         'date': date,
-                        'job': list(file["job"].keys())[0],
+                        'job': job,
                         'url': url
                     }
                 )
             
             return jobs_to_scrap
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON: {e}")
+            logger.error(f"Error decoding JSON: {e}")
             return []
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
             return []
         
     def __create_tables(self) -> None:
