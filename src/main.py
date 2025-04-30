@@ -1,7 +1,7 @@
 import sys
 from loguru import logger
-from utils.config_loader import Config
-from utils.datastats_utils import DataStats
+from src.utils.config_loader import Config
+from src.utils.datastats_utils import DataStats
 from google.cloud import logging as gcloud_logging
 
 # Initialize Google Cloud Logging

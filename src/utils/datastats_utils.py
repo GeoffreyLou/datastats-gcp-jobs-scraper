@@ -1,9 +1,9 @@
 import json
 from loguru import logger
-from utils.config_loader import Config
-from utils.gcp_utils import GoogleUtils
-from utils.pg_utils import PostgresUtils
-from utils.jobs_scraper import JobsScraper
+from src.utils.config_loader import Config
+from src.utils.gcp_utils import GoogleUtils
+from src.utils.pg_utils import PostgresUtils
+from src.utils.jobs_scraper import JobsScraper
 
 class DataStats:
     def __init__(
@@ -81,7 +81,7 @@ class DataStats:
             A JSON string containing the job data.
         
         Returns
-        -------
+        ------- 
         list(dict[str, str, str])
             A list of dictionaries containing the date, job title, and URL for each job.
         """
@@ -97,7 +97,7 @@ class DataStats:
                 jobs_to_scrap.append(
                     {
                         'date': date,
-                        'job': list(file["job"].keys())[0],
+                        'job': job,
                         'url': url
                     }
                 )
