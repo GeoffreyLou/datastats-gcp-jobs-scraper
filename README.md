@@ -27,8 +27,12 @@ This repository contains a Cloud Run Job that retrieves job offer URLs from vari
 
 ```shell
 datastats-gcp-jobs-scraper/
+├── .github/
+│   ├── dependabot.yml
+│   └── workflows/
+│       └── build_and_deploy.yml
 ├── assets/
-│   └── jobs_scraper_architecture.png
+│   └── jobs_scraper.png
 ├── src/
 │   ├── main.py
 │   └── utils/
@@ -38,8 +42,6 @@ datastats-gcp-jobs-scraper/
 │       ├── gcp_utils.py
 │       ├── jobs_scraper.py
 │       └── pg_utils.py
-├── local/
-│   └── test.py
 ├── .gitignore
 ├── Dockerfile
 ├── pyproject.toml
