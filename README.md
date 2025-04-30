@@ -21,7 +21,7 @@ This repository contains a Cloud Run Job that retrieves job offer URLs from vari
 - Scraped job data is inserted into a PostgreSQL database (Cloud SQL).
 - Errors and statistics are logged for monitoring and debugging.
 
-![Jobs Scraper global architecture](assets/jobs_scraper_architecture.png)
+![Jobs Scraper global architecture](assets/jobs_scrapper.png)
 
 ## 📁 Repository tree
 
