@@ -1,9 +1,9 @@
 import json
 from loguru import logger
-from src.utils.config_loader import Config
-from src.utils.gcp_utils import GoogleUtils
-from src.utils.pg_utils import PostgresUtils
-from src.utils.jobs_scraper import JobsScraper
+from utils.config_loader import Config
+from utils.gcp_utils import GoogleUtils
+from utils.pg_utils import PostgresUtils
+from utils.jobs_scraper import JobsScraper
 
 class DataStats:
     def __init__(
