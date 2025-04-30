@@ -51,6 +51,3 @@ datastats-gcp-jobs-scraper/
 
 Planned improvements for this repository:
 - Add tests
-- Add a detailed architecture diagram in `assets/`
-- Improve error handling and monitoring
-- Add more job sources and scraping strategies
