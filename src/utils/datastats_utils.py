@@ -104,10 +104,10 @@ class DataStats:
             
             return jobs_to_scrap
         except json.JSONDecodeError as e:
-            print(f"Error decoding JSON: {e}")
+            logger.error(f"Error decoding JSON: {e}")
             return []
         except Exception as e:
-            print(f"An error occurred: {e}")
+            logger.error(f"An error occurred: {e}")
             return []
         
     def __create_tables(self) -> None:
