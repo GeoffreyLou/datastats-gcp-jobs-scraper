@@ -32,7 +32,7 @@ jobs:
 
       - name: Auth to GCP
         id: get_gcp_access_token
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
           token_format: access_token
           workload_identity_provider: ${{ env.GCP_WORKLOAD_IDENTITY_PROVIDER }}
