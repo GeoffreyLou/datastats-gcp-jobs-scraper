@@ -1,0 +1,20 @@
+{
+    "description": "Table containing information of scraped job offers",
+    "partition_field": "created_at",
+    "clustering_fields": ["job_scraped", "location"],
+    "schema": [
+        {"name": "id", "type": "STRING", "mode": "REQUIRED", "description": "Unique job identifier"},
+        {"name": "id_deduplication", "type": "STRING", "mode": "REQUIRED", "description": "Identifier used to deduplicate jobs offers each month"},
+        {"name": "scrap_date", "type": "TIMESTAMP", "mode": "REQUIRED", "description": "Date of scraping"},
+        {"name": "job_scraped", "type": "STRING", "mode": "REQUIRED", "description": "Job scraped"},
+        {"name": "job_name", "type": "STRING", "mode": "REQUIRED", "description": "Job name in the offer"},
+        {"name": "company_name", "type": "STRING", "mode": "REQUIRED", "description": "Name of the company offering the job"},
+        {"name": "location", "type": "STRING", "description": "Localisation of the job"},
+        {"name": "level", "type": "STRING", "description": "Experience level"},
+        {"name": "type", "type": "STRING", "description": "Type of contract"},
+        {"name": "category", "type": "STRING", "description": "Job category"},
+        {"name": "sector", "type": "STRING", "description": "Job sector of activity"},
+        {"name": "created_at", "type": "TIMESTAMP", "mode": "REQUIRED", "description": "Record creation date"},
+        {"name": "updated_at", "type": "TIMESTAMP", "mode": "REQUIRED", "description": "Record update date"}
+    ]
+}

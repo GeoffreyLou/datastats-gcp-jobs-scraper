@@ -1,51 +1,34 @@
 import json
+import uuid
+from datetime import datetime, timezone
 from loguru import logger
-from utils.config_loader import Config
 from utils.gcp_utils import GoogleUtils
-from utils.pg_utils import PostgresUtils
+from utils.bigquery_utils import BigQueryTableManager
 from utils.jobs_scraper import JobsScraper
 
 class DataStats:
     def __init__(
         self,
-        config: Config
+        project_id: str,
+        bq_dataset: str,
+        urls_bucket_name: str,
+        archive_bucket_name: str,
+        jobs_information_table_name: str,
+        jobs_information_config: dict,
+        jobs_description_table_name: str,
+        jobs_description_config: dict,
+        scrap_errors_table_name: str,
+        scrap_errors_config: dict
     ):
-        self.urls_bucket_name=config.DATASTATS_BUCKET_URLS
-        self.archive_bucket_name=config.DATASTATS_BUCKET_ARCHIVE
-        self.db_host=config.DB_HOST
-        self.db_user=config.DB_USER
-        self.db_password=config.DB_USER_PASSWORD
-        self.db_name=config.DB_NAME
-        self.db_port=config.DB_PORT
-        self.db_root_cert=config.DB_ROOT_CERT
-        self.db_cert=config.DB_CERT
-        self.db_key=config.DB_KEY
-        self.jobs_information_table_name = 'jobs_information'
-        self.jobs_information_schema = {
-            'id': 'SERIAL PRIMARY KEY',
-            'id_deduplication': 'VARCHAR(255) UNIQUE',
-            'scrap_date': 'DATE',
-            'job_scraped': 'VARCHAR(255)',
-            'job_name': 'VARCHAR(255)',
-            'company_name': 'VARCHAR(255)',
-            'location': 'VARCHAR(255)',
-            'level': 'VARCHAR(255)',
-            'type': 'VARCHAR(255)',
-            'category': 'TEXT',
-            'sector': 'TEXT',
-        }
-        self.jobs_description_table_name = 'jobs_description'
-        self.jobs_description_schema = {
-            'id': 'SERIAL PRIMARY KEY',
-            'id_job_information': 'INTEGER UNIQUE REFERENCES jobs_information(id)',
-            'description': 'TEXT',
-        }
-        self.scrap_errors_table_name = 'scrap_errors'
-        self.scrap_errors_schema = {    
-            'id': 'SERIAL PRIMARY KEY',
-            'error_message': 'TEXT',
-            'url': 'TEXT',
-        }
+        self.urls_bucket_name = urls_bucket_name
+        self.archive_bucket_name = archive_bucket_name
+        self.jobs_information_table_name = jobs_information_table_name
+        self.jobs_information_config = jobs_information_config
+        self.jobs_description_table_name = jobs_description_table_name
+        self.jobs_description_config = jobs_description_config
+        self.scrap_errors_table_name = scrap_errors_table_name
+        self.scrap_errors_config = scrap_errors_config
+        self.bq = BigQueryTableManager(project_id=project_id, dataset_id=bq_dataset)
 
     def __generate_jobs_to_scrap(self, file: str) -> list[dict[str, str, str]]:
         """
@@ -60,7 +43,7 @@ class DataStats:
                 ]
             }
         }
-        
+
         The function will return a list of dictionaries with the following structure:
         [
             {
@@ -74,18 +57,18 @@ class DataStats:
                 "url": "https://example.com/job2"
             }
         ]
-        
+
         Parameters
         ----------
         file : str
             A JSON string containing the job data.
-        
+
         Returns
-        ------- 
+        -------
         list(dict[str, str, str])
             A list of dictionaries containing the date, job title, and URL for each job.
         """
-        
+
         try:
             file = json.loads(file)
             date = file["date"]
@@ -101,7 +84,7 @@ class DataStats:
                         'url': url
                     }
                 )
-            
+
             return jobs_to_scrap
         except json.JSONDecodeError as e:
             logger.error(f"Error decoding JSON: {e}")
@@ -109,141 +92,121 @@ class DataStats:
         except Exception as e:
             logger.error(f"An error occurred: {e}")
             return []
-        
+
     def __create_tables(self) -> None:
         """
-        Create the tables in the database if they do not exist.
-        
+        Create the BigQuery dataset and tables if they do not exist.
+
         Returns
         -------
         None
         """
-        
-        logger.info('Setting connection to pgsql...')
-        pg = PostgresUtils()
-        connection = pg.connect_with_ssl(
-            db_host=self.db_host,
-            db_user=self.db_user,
-            db_password=self.db_password,
-            db_name=self.db_name,
-            db_port=self.db_port,
-            db_root_cert=self.db_root_cert,
-            db_cert=self.db_cert,
-            db_key=self.db_key
-        )
-        
-        logger.info('Create tables if they do not exist...')
-        pg.create_table_if_not_exists(
-            connection=connection,
+
+        logger.info('Checking BigQuery dataset and tables...')
+        self.bq.create_dataset_if_not_exists()
+
+        self.bq.create_table_from_schema(
             table_name=self.jobs_information_table_name,
-            table_schema=self.jobs_information_schema
+            schema=self.jobs_information_config['schema'],
+            description=self.jobs_information_config.get('description'),
+            partition_field=self.jobs_information_config.get('partition_field'),
+            clustering_fields=self.jobs_information_config.get('clustering_fields')
         )
-        
-        pg.create_table_if_not_exists(
-            connection=connection,
+
+        self.bq.create_table_from_schema(
             table_name=self.jobs_description_table_name,
-            table_schema=self.jobs_description_schema
+            schema=self.jobs_description_config['schema'],
+            description=self.jobs_description_config.get('description'),
+            partition_field=self.jobs_description_config.get('partition_field'),
+            clustering_fields=self.jobs_description_config.get('clustering_fields')
         )
-        
-        pg.create_table_if_not_exists(  
-            connection=connection,
+
+        self.bq.create_table_from_schema(
             table_name=self.scrap_errors_table_name,
-            table_schema=self.scrap_errors_schema
+            schema=self.scrap_errors_config['schema'],
+            description=self.scrap_errors_config.get('description'),
+            partition_field=self.scrap_errors_config.get('partition_field'),
+            clustering_fields=self.scrap_errors_config.get('clustering_fields')
         )
-        
-        pg.close_connection(connection)
-        
+
     def __insert_jobs_data(self, data_list: list[dict]) -> None:
         """
-        Insert job data into the database.
-        
+        Insert job data into BigQuery.
+
         Parameters
         ----------
         data_list : list(dict)
             A list of dictionaries containing the job data to insert.
-        
+
         Returns
         -------
         None
         """
-        
-        pg = PostgresUtils()
-        connection = pg.connect_with_ssl(
-            db_host=self.db_host,
-            db_user=self.db_user,
-            db_password=self.db_password,
-            db_name=self.db_name,
-            db_port=self.db_port,
-            db_root_cert=self.db_root_cert,
-            db_cert=self.db_cert,
-            db_key=self.db_key
-        )
-        
-        for job in data_list: 
-            # If there is an error, skip the job and upload url in Database to check it later
+
+        for job in data_list:
+            now = datetime.now(timezone.utc).isoformat()
+
+            # If there is an error, skip the job and log the error for later review
             if 'ValueNotFound' in job.values():
                 try:
                     logger.warning(f"Job with value not allowed: {job.get('url')}")
                     error_keys = ', '.join([key for key, value in job.items() if value == 'ValueNotFound'])
-                    
-                    error_data = {
-                        'error_message': error_keys,
-                        'url': job['url']
-                    }
-                
-                    pg.insert_data(
-                        connection=connection, 
-                        table_name=self.scrap_errors_table_name, 
-                        data=error_data
+
+                    self.bq.insert_rows(
+                        table_name=self.scrap_errors_table_name,
+                        rows=[{
+                            'id': str(uuid.uuid4()),
+                            'error_message': error_keys,
+                            'url': job['url'],
+                            'created_at': now
+                        }]
                     )
                 except Exception as e:
                     logger.error(f"Failed to insert error record: {e}")
                     continue
-            # If not, the job is valid, insert it into the database
+            # If not, the job is valid, insert it into BigQuery
             else:
                 try:
-                    job_info_data = {
-                        'id_deduplication': job['id_deduplication'],
-                        'scrap_date': job['scrap_date'],
-                        'job_scraped': job['job_scraped'],
-                        'job_name': job['job_name'],
-                        'company_name': job['company_name'],
-                        'location': job['location'],
-                        'level': job['level'],
-                        'type': job['type'],
-                        'category': job['category'],
-                        'sector': job['sector']
-                    }
-                    
-                    # The job_info_id is used to assure join between the two tables
-                    job_info_id = pg.insert_data(
-                        connection=connection,
+                    job_info_id = str(uuid.uuid4())
+
+                    self.bq.insert_rows(
                         table_name=self.jobs_information_table_name,
-                        data=job_info_data
+                        rows=[{
+                            'id': job_info_id,
+                            'id_deduplication': job['id_deduplication'],
+                            'scrap_date': job['scrap_date'],
+                            'job_scraped': job['job_scraped'],
+                            'job_name': job['job_name'],
+                            'company_name': job['company_name'],
+                            'location': job['location'],
+                            'level': job['level'],
+                            'type': job['type'],
+                            'category': job['category'],
+                            'sector': job['sector'],
+                            'created_at': now,
+                            'updated_at': now
+                        }]
                     )
-                    
-                    job_description_data = {
-                        'id_job_information': job_info_id,
-                        'description': job['description']
-                    }
-                    
-                    pg.insert_data(
-                        connection=connection,
+
+                    self.bq.insert_rows(
                         table_name=self.jobs_description_table_name,
-                        data=job_description_data
+                        rows=[{
+                            'id_job_information': job_info_id,
+                            'description': job['description'],
+                            'created_at': now,
+                            'updated_at': now
+                        }]
                     )
-                        
+
                     logger.info(f"Job successfully inserted with ID: {job_info_id}")
                 except Exception as e:
                     logger.error(f"Failed to insert job data: {e}")
                     continue
-     
-        pg.close_connection(connection)
-    
+
     def __scrap_urls(self):
-        
+
         data_to_insert = []
-        
+
         # List all files in the bucket and scrap data
         blobs_list = GoogleUtils.list_blobs(
             bucket_name=self.urls_bucket_name
@@ -260,11 +223,11 @@ class DataStats:
 
             # Initialize the JobsScraper with the list of jobs to scrap
             jobs_scraper = JobsScraper(jobs_to_scrap=jobs_to_scrap)
-            
+
             # For each job , scrap job informations and add it to the list of jobs to insert
             jobs_to_insert = jobs_scraper.scrape_jobs()
             data_to_insert.extend(jobs_to_insert)
-            
+
             # Move the processed blob to another bucket
             GoogleUtils.move_blob(
                 source_bucket_name=self.urls_bucket_name,
@@ -273,14 +236,14 @@ class DataStats:
             )
 
         return data_to_insert
-    
+
     def start_workflow(self):
-        
-        # Create tables in the database
+
+        # Create the BigQuery dataset and tables
         self.__create_tables()
-        
-        # Scrap URLs and insert data in the database
+
+        # Scrap URLs and insert data in BigQuery
         jobs_to_insert = self.__scrap_urls()
-        
+
         self.__insert_jobs_data(data_list=jobs_to_insert)
         logger.success("DataStats workflow completed successfully.")

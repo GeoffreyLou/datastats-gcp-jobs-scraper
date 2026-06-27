@@ -70,3 +70,13 @@ jobs:
           region: ${{ env.GCP_REGION }}
           image: ${{ env.GCP_REGION}}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GCP_ARTIFACT_REGISTRY_NAME }}/${{ env.GCP_JOB_NAME }}:latest
           skip_default_labels: true
+          env_vars_file: .env.prod # Lit directement le fichier .env.prod
+          
+          # EXEMPLE : Injecter des secrets GitHub comme variables d'environnement
+          # env_vars: |
+          #   API_KEY=${{ secrets.API_KEY }}
+          #   DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          
+          # EXEMPLE : Utiliser GCP Secret Manager (Recommandé pour la sécu)
+          # secrets: |
+          #   DB_PASSWORD=projects/${{ env.GCP_PROJECT_ID }}/secrets/db-password/versions/latest

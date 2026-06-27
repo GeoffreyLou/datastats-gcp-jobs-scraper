@@ -1,0 +1,11 @@
+{
+    "description": "Table containing the description of jobs offers",
+    "partition_field": "created_at",
+    "clustering_fields": ["id_job_information"],
+    "schema": [
+        {"name": "id_job_information", "type": "STRING", "mode": "REQUIRED", "description": "Reference to jobs_information.id"},
+        {"name": "description", "type": "STRING", "mode": "REQUIRED", "description": "Description complète du poste"},
+        {"name": "created_at", "type": "TIMESTAMP", "mode": "REQUIRED", "description": "Record creation date"},
+        {"name": "updated_at", "type": "TIMESTAMP", "mode": "REQUIRED", "description": "Record update date"}
+    ]
+}
