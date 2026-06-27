@@ -1,6 +1,6 @@
 from google.cloud import bigquery
 from google.cloud.exceptions import NotFound
-from typing import Dict, List
+from typing import Dict, List, Optional
 from loguru import logger
 
 
@@ -9,8 +9,8 @@ class BigQueryTableManager:
     Gestionnaire pour la création et l'insertion de données dans BigQuery
     """
 
-    def __init__(self, project_id: str, dataset_id: str):
-        self.client = bigquery.Client(project=project_id)
+    def __init__(self, project_id: str, dataset_id: str, client: Optional[bigquery.Client] = None):
+        self.client = client or bigquery.Client(project=project_id)
         self.project_id = project_id
         self.dataset_id = dataset_id
 
